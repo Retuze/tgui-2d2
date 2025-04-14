@@ -73,7 +73,7 @@ void tgui_constraint_solver_add(tgui_constraint_solver_t* solver,
 }
 
 tgui_result_t tgui_constraint_solver_add_constraint(tgui_constraint_solver_t* solver, tgui_widget_t* widget, tgui_constraint_t* constraint) {
-    if (solver->constraint_count >= TGUI_MAX_CONSTRAINTS) {
+    if (solver->count >= TGUI_MAX_CONSTRAINTS) {
         return TGUI_ERR_BUFFER_FULL;
     }
 
@@ -81,8 +81,8 @@ tgui_result_t tgui_constraint_solver_add_constraint(tgui_constraint_solver_t* so
     constraint->self_id = widget->id;
     
     // 复制约束到solver中
-    solver->constraints[solver->constraint_count] = *constraint;
-    solver->constraint_count++;
+    solver->constraints[solver->count] = *constraint;
+    solver->count++;
 
     return TGUI_OK;
 }
@@ -137,11 +137,6 @@ static void apply_constraint(tgui_widget_t* widget,
             }
             break;
     }
-    
-    // 处理角度约束
-    if (constraint->angle_type != TGUI_ANGLE_NONE) {
-        // TODO: 实现角度约束
-    }
 }
 
 // 获取控件树中指定ID的控件
@@ -175,4 +170,18 @@ void tgui_constraint_solver_solve(tgui_constraint_solver_t* solver,
             apply_constraint(self, c, target);
         }
     }
+}
+
+void tgui_constraint_solver_cleanup(tgui_constraint_solver_t* solver) {
+    if (solver == NULL) return;
+    
+    // 释放约束数组的内存
+    if (solver->constraints != NULL) {
+        free(solver->constraints);
+        solver->constraints = NULL;
+    }
+    
+    // 重置计数器
+    solver->count = 0;
+    solver->capacity = 0;
 }
