@@ -1,11 +1,36 @@
 #include "../include/tgui_core.h"
 #include "../include/tgui_widget.h"
+#include "../include/tgui_constraint.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
 
+// Global variables
 static const tgui_platform_t* platform = NULL;
 static tgui_widget_t* root_widget = NULL;
 static tgui_screen_t current_screen;
+static uint16_t widget_count = 0;
+static bool need_redraw = false;
+
+// 递归打印控件位置
+static void print_widget_positions(tgui_widget_t* widget, int level) {
+    if (!widget) return;
+    
+    // 打印缩进
+    for (int i = 0; i < level; i++) {
+        printf("  ");
+    }
+    
+    // 打印控件信息
+    printf("Widget ID: %d, Position: (%d, %d), Size: %dx%d\n",
+           widget->id, widget->x, widget->y, widget->width, widget->height);
+    
+    // 递归打印子控件
+    for (tgui_widget_t* child = widget->children; child != NULL; child = child->next) {
+        print_widget_positions(child, level + 1);
+    }
+}
 
 // 递归绘制控件及其子控件
 static void draw_widget_tree(tgui_widget_t* widget, tgui_screen_t* screen) {
@@ -22,6 +47,21 @@ static void draw_widget_tree(tgui_widget_t* widget, tgui_screen_t* screen) {
     }
 }
 
+// 递归更新控件布局
+static void update_widget_layout(tgui_widget_t* widget) {
+    if (!widget) return;
+    
+    // 更新当前控件布局
+    if (widget->update_layout) {
+        widget->update_layout(widget);
+    }
+    
+    // 更新子控件布局
+    for (tgui_widget_t* child = widget->children; child != NULL; child = child->next) {
+        update_widget_layout(child);
+    }
+}
+
 // 获取当前屏幕缓冲区
 const tgui_screen_t* tgui_get_screen(void) {
     return &current_screen;
@@ -30,6 +70,65 @@ const tgui_screen_t* tgui_get_screen(void) {
 // 获取根控件
 tgui_widget_t* tgui_get_root_widget(void) {
     return root_widget;
+}
+
+uint16_t tgui_get_widget_count(void) {
+    return widget_count;
+}
+
+// Helper function to find widget by ID
+static tgui_widget_t* find_widget_by_id(tgui_widget_t* root, tgui_id_t id) {
+    if (!root) return NULL;
+    if (root->id == id) return root;
+    
+    // Search in children
+    tgui_widget_t* child = root->children;
+    while (child) {
+        tgui_widget_t* result = find_widget_by_id(child, id);
+        if (result) return result;
+        child = child->next;
+    }
+    
+    return NULL;
+}
+
+// 触发重新布局
+void tgui_trigger_layout(void) {
+    if (root_widget) {
+        // Initialize constraint solver
+        tgui_constraint_solver_t solver = {0};
+        tgui_constraint_solver_init(&solver);
+
+        // Add constraints from widgets
+        tgui_widget_t* current = root_widget;
+        while (current) {
+            if (current->constraint_count > 0) {
+                for (int j = 0; j < current->constraint_count; j++) {
+                    tgui_constraint_solver_add(&solver, &current->constraints[j]);
+                }
+            }
+            // Move to next widget (depth-first traversal)
+            if (current->children) {
+                current = current->children;
+            } else if (current->next) {
+                current = current->next;
+            } else {
+                while (current->parent && !current->parent->next) {
+                    current = current->parent;
+                }
+                current = current->parent ? current->parent->next : NULL;
+            }
+        }
+
+        // Solve constraints
+        tgui_constraint_solver_solve(&solver, root_widget, widget_count);
+
+        // Cleanup
+        tgui_constraint_solver_cleanup(&solver);
+
+        // Mark for redraw
+        need_redraw = true;
+    }
 }
 
 // 初始化GUI系统
@@ -80,6 +179,8 @@ int tgui_init(const tgui_platform_t* platform_ptr,
     }
     
     tgui_widget_init(root_widget, 0); // 根控件ID为0
+    root_widget->width = width;   // 设置根控件宽度
+    root_widget->height = height; // 设置根控件高度
     return 0;
 }
 
@@ -98,4 +199,9 @@ tgui_render_result_t tgui_render(void) {
     
     // 调用平台渲染
     return platform->render(&current_screen);
+}
+
+// 更新widget_count的函数
+void tgui_update_widget_count(void) {
+    widget_count++;
 }

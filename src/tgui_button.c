@@ -1,7 +1,13 @@
 #include "../include/tgui_button.h"
 #include "../include/tgui_core.h"
+#include "../include/tgui_types.h"
 #include <string.h>
 #include <stdlib.h>
+
+// 按钮布局更新
+static void button_update_layout(tgui_widget_t* widget) {
+    // 使用固定布局，不需要实现
+}
 
 // 按钮绘制函数
 static void button_draw(tgui_widget_t* base, tgui_screen_t* screen) {
@@ -59,31 +65,49 @@ static void button_draw(tgui_widget_t* base, tgui_screen_t* screen) {
 }
 
 // 按钮初始化函数
-void tgui_button_init(tgui_button_t* button, uint16_t id, const char* text) {
+void tgui_button_init(tgui_button_t* button, tgui_id_t id, const char* text) {
+    if (button == NULL) return;
+    
     // 初始化基类
     tgui_widget_init(&button->base, id);
     
-    // 设置按钮大小
+    // 设置按钮特有属性
+    button->text = text ? strdup(text) : NULL;
+    button->bg_color = TGUI_COLOR_BLACK;
+    button->text_color = TGUI_COLOR_WHITE;
+    
+    // 设置默认大小和位置
     button->base.width = 100;
-    button->base.height = 30;
+    button->base.height = 40;
     
-    // 设置绘制函数
-    button->base.draw = button_draw;
-    
-    // 设置文本
-    if (text != NULL) {
-        button->text = strdup(text);
-    } else {
-        button->text = NULL;
+    // 根据ID设置固定位置
+    if (id == 1) {
+        button->base.x = 350;  // (800 - 100) / 2
+        button->base.y = 230;  // (600 - 40) / 2 - 50
+    } else if (id == 2) {
+        button->base.x = 350;  // (800 - 100) / 2
+        button->base.y = 320;  // 230 + 40 + 50
     }
     
-    // 设置默认颜色
-    button->bg_color = TGUI_COLOR_BLACK;    // 黑色背景
-    button->text_color = TGUI_COLOR_WHITE;  // 白色文字
+    // 设置回调函数
+    button->base.draw = button_draw;
+    button->base.update_layout = button_update_layout;
+}
+
+void tgui_button_destroy(tgui_button_t* button) {
+    if (button == NULL) return;
+    
+    // 释放文本内存
+    if (button->text) {
+        free(button->text);
+        button->text = NULL;
+    }
 }
 
 // 设置按钮颜色
 void tgui_button_set_colors(tgui_button_t* button, tgui_pixel_t bg_color, tgui_pixel_t text_color) {
+    if (button == NULL) return;
+    
     button->bg_color = bg_color;
     button->text_color = text_color;
 }

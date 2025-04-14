@@ -1,7 +1,11 @@
 #include "../include/tgui_widget.h"
 #include "../include/tgui_constraint.h"
+#include "../include/tgui_core.h"
 #include <stdlib.h>
 #include <string.h>
+
+// 声明外部函数
+extern void tgui_update_widget_count(void);
 
 void tgui_widget_init(tgui_widget_t* widget, uint16_t id) {
     if (widget == NULL) return;
@@ -11,35 +15,35 @@ void tgui_widget_init(tgui_widget_t* widget, uint16_t id) {
     widget->y = 0;
     widget->width = 0;
     widget->height = 0;
-    
-    // 初始化约束系统
-    widget->constraint_count = 0;
-    memset(widget->constraints, 0, sizeof(widget->constraints));
-    
-    // 设置默认绘制函数为NULL，由子类覆盖
-    widget->draw = NULL;
-    widget->update_layout = NULL;
-    
+    widget->parent = NULL;
     widget->children = NULL;
     widget->next = NULL;
+    widget->draw = NULL;
+    widget->update_layout = NULL;
+    widget->constraint_count = 0;
+    
+    // 初始化约束系统
+    memset(widget->constraints, 0, sizeof(widget->constraints));
 }
 
 void tgui_widget_add_child(tgui_widget_t* parent, tgui_widget_t* child) {
     if (parent == NULL || child == NULL) return;
     
-    // 添加到子控件链表末尾
-    tgui_widget_t** p = &parent->children;
-    while (*p != NULL) {
-        p = &(*p)->next;
-    }
-    *p = child;
-    child->next = NULL;
+    // 设置父子关系
+    child->parent = parent;
+    
+    // 将子控件添加到链表头部
+    child->next = parent->children;
+    parent->children = child;
+    
+    // 更新控件计数
+    tgui_update_widget_count();
 }
 
 void tgui_widget_add_constraint(tgui_widget_t* widget, 
                               const tgui_constraint_t* constraint) {
     if (widget == NULL || constraint == NULL || 
-        widget->constraint_count >= 8) {
+        widget->constraint_count >= sizeof(widget->constraints)/sizeof(widget->constraints[0])) {
         return;
     }
     

@@ -1,55 +1,62 @@
 #ifndef TGUI_CONSTRAINT_H
 #define TGUI_CONSTRAINT_H
 
-#include "tgui_types.h"
+#include <stdint.h>
+#include "tgui_result.h"
+#include "tgui_types.h"  // Include for tgui_edge_t
 
-// 前向声明
+#define TGUI_MAX_CONSTRAINTS 100
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+struct tgui_widget;
 typedef struct tgui_widget tgui_widget_t;
 
-// 约束类型
+// Constraint value types
 typedef enum {
-    TGUI_CONSTRAINT_FIXED,      // 固定约束
-    TGUI_CONSTRAINT_FLEXIBLE,   // 弹性约束
-    TGUI_CONSTRAINT_PERCENT,    // 百分比约束
-    TGUI_CONSTRAINT_ASPECT      // 宽高比约束
-} tgui_constraint_type_t;
+    TGUI_CONSTRAINT_FIXED,
+    TGUI_CONSTRAINT_FLEXIBLE,
+    TGUI_CONSTRAINT_PERCENT,
+    TGUI_CONSTRAINT_ASPECT
+} tgui_constraint_value_type_t;
 
-// 约束条件
+// Constraint structure
 typedef struct {
-    tgui_id_t target_id;          // 目标控件ID
-    tgui_edge_t target_edge;      // 目标边
-    tgui_edge_t self_edge;        // 自身边
-    tgui_constraint_type_t type;  // 约束类型
+    uint16_t target_id;  // ID of target widget
+    uint16_t self_id;    // ID of self widget
+    tgui_edge_t target_edge;
+    tgui_edge_t self_edge;
+    tgui_constraint_value_type_t type;
     union {
-        int16_t fixed_value;      // 固定值
+        int16_t fixed_value;
         struct {
-            int16_t min_value;    // 最小值(弹性约束)
-            int16_t max_value;    // 最大值(弹性约束)
-            float weight;         // 权重(0-1)
+            int16_t min_value;
+            int16_t max_value;
+            float weight;
         } flex;
-        float percent;            // 百分比(0-1)
-        float aspect_ratio;       // 宽高比
+        float percent;
+        float aspect_ratio;
     } value;
-    tgui_angle_constraint_t angle_type;  // 角度约束
-    uint16_t custom_angle;       // 自定义角度(0-360)
 } tgui_constraint_t;
 
-// 约束求解器
+// Constraint solver structure
 typedef struct {
     tgui_constraint_t* constraints;
-    uint16_t count;
+    int count;
+    int capacity;
 } tgui_constraint_solver_t;
 
-// 初始化约束求解器
+// Function prototypes
 void tgui_constraint_solver_init(tgui_constraint_solver_t* solver);
+void tgui_constraint_solver_add(tgui_constraint_solver_t* solver, const tgui_constraint_t* constraint);
+void tgui_constraint_solver_solve(tgui_constraint_solver_t* solver, tgui_widget_t* root_widget, uint16_t widget_count);
+void tgui_constraint_solver_cleanup(tgui_constraint_solver_t* solver);
 
-// 添加约束条件
-void tgui_constraint_solver_add(tgui_constraint_solver_t* solver, 
-                              const tgui_constraint_t* constraint);
-
-// 求解布局
-void tgui_constraint_solver_solve(tgui_constraint_solver_t* solver,
-                                tgui_widget_t* widgets,
-                                uint16_t widget_count);
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TGUI_CONSTRAINT_H

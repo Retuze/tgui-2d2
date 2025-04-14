@@ -22,6 +22,7 @@ static uint32_t* screen_buffer = NULL;
 static HWND hwnd = NULL;
 static HINSTANCE hInstance = NULL;
 static RECT client_rect = {0};
+static tgui_screen_t* current_screen_ptr = NULL;
 
 // 窗口过程函数
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -35,13 +36,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
-            if (screen_dc && screen_bitmap) {
+            if (screen_dc && screen_bitmap && current_screen_ptr) {
                 // 计算居中显示的位置
-                int x = (client_rect.right - client_rect.left - ps.rcPaint.right + ps.rcPaint.left) / 2;
-                int y = (client_rect.bottom - client_rect.top - ps.rcPaint.bottom + ps.rcPaint.top) / 2;
-                BitBlt(hdc, x, y, ps.rcPaint.right - ps.rcPaint.left, 
-                      ps.rcPaint.bottom - ps.rcPaint.top,
-                      screen_dc, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
+                int x = (client_rect.right - client_rect.left - current_screen_ptr->width) / 2;
+                int y = (client_rect.bottom - client_rect.top - current_screen_ptr->height) / 2;
+                BitBlt(hdc, x, y, current_screen_ptr->width, current_screen_ptr->height,
+                      screen_dc, 0, 0, SRCCOPY);
             }
             EndPaint(hwnd, &ps);
             return 0;
@@ -56,6 +56,7 @@ static int windows_init(tgui_screen_t* screen) {
         return -1;
     }
 
+    current_screen_ptr = screen;
     hInstance = GetModuleHandle(NULL);
 
     // 注册窗口类
