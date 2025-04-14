@@ -16,6 +16,7 @@ void tgui_widget_init(tgui_widget_t* widget, uint16_t id) {
     widget->constraint_count = 0;
     memset(widget->constraints, 0, sizeof(widget->constraints));
     
+    // 设置默认绘制函数为NULL，由子类覆盖
     widget->draw = NULL;
     widget->update_layout = NULL;
     

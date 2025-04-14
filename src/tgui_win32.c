@@ -106,7 +106,7 @@ static int windows_init(tgui_screen_t* screen) {
     ReleaseDC(hwnd, hdc);
     if (screen_dc == NULL) return -1;
     
-    // 创建32位RGBA屏幕缓冲区
+    // 创建32位ARGB屏幕缓冲区
     BITMAPINFO bmi = {0};
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth = screen->width;
@@ -141,17 +141,16 @@ static tgui_render_result_t windows_render(const tgui_screen_t* screen) {
                 uint8_t b = pixel & 0x1F;          // 5 bits
                 
                 // 扩展颜色范围到 8 位
-                // 使用移位和或运算来扩展颜色范围
                 r = (r << 3) | (r >> 2);  // 5 bits -> 8 bits
                 g = (g << 2) | (g >> 4);  // 6 bits -> 8 bits
                 b = (b << 3) | (b >> 2);  // 5 bits -> 8 bits
                 
-                // 组合成 RGBA8888 格式 (0xAARRGGBB)
+                // 组合成 ARGB8888 格式 (0xAARRGGBB)
                 screen_buffer[y * screen->width + x] = (0xFF << 24) | (r << 16) | (g << 8) | b;
             }
         }
-    } else if (screen->format == TGUI_PIXFMT_RGBA8888) {
-        // 直接拷贝RGBA数据
+    } else if (screen->format == TGUI_PIXFMT_ARGB8888) {
+        // 直接拷贝ARGB数据
         uint32_t* src = (uint32_t*)screen->buffer;
         for (int y = 0; y < screen->height; y++) {
             memcpy(&screen_buffer[y * screen->width], 

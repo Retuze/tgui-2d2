@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "tgui_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,8 +14,8 @@ typedef struct tgui_widget tgui_widget_t;
 
 // 像素格式枚举
 typedef enum {
-    TGUI_PIXFMT_RGB565,  // 16位RGB565
-    TGUI_PIXFMT_RGBA8888 // 32位RGBA
+    TGUI_PIXFMT_RGB565 = TGUI_PIXEL_FORMAT_RGB565,    // 16位RGB565
+    TGUI_PIXFMT_ARGB8888 = TGUI_PIXEL_FORMAT_ARGB8888 // 32位ARGB
 } tgui_pixel_format_t;
 
 // 屏幕缓冲区描述结构体
@@ -25,8 +26,8 @@ typedef struct {
     uint16_t buffer_height;  // 物理高度
     uint32_t buffer_size;    // 缓冲区大小(字节)
     tgui_pixel_format_t format; // 像素格式
-    void* buffer;           // 缓冲区指针
-    uint32_t stride;        // 每行字节数
+    tgui_pixel_t* buffer;    // 缓冲区指针
+    uint32_t stride;         // 每行字节数
 } tgui_screen_t;
 
 // 渲染结果枚举

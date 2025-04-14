@@ -10,14 +10,18 @@ int main() {
     // 创建屏幕缓冲区
     const int width = 800;
     const int height = 600;
-    const int buffer_size = width * height * 2; // RGB565 每个像素2字节
-    uint16_t* screen_buffer = (uint16_t*)malloc(buffer_size);
+    const int buffer_size = width * height * TGUI_BYTES_PER_PIXEL;
+    tgui_pixel_t* screen_buffer = (tgui_pixel_t*)malloc(buffer_size);
     if (screen_buffer == NULL) {
         return -1;
     }
 
-    // 初始化GUI系统(800x600, RGB565格式)
+    // 初始化GUI系统
+    #if TGUI_CURRENT_PIXEL_FORMAT == TGUI_PIXEL_FORMAT_ARGB8888
+    if (tgui_init(&windows_platform, width, height, TGUI_PIXFMT_ARGB8888, screen_buffer) != 0) {
+    #else
     if (tgui_init(&windows_platform, width, height, TGUI_PIXFMT_RGB565, screen_buffer) != 0) {
+    #endif
         free(screen_buffer);
         return -1;
     }
@@ -28,8 +32,8 @@ int main() {
     tgui_button_init(&button2, 2, "Button 2");
 
     // 设置按钮颜色
-    tgui_button_set_colors(&button1, 0xF800, 0xFFFF); // 红色背景，白色文字
-    tgui_button_set_colors(&button2, 0x07E0, 0x0000); // 绿色背景，黑色文字
+    tgui_button_set_colors(&button1, TGUI_COLOR_RED, TGUI_COLOR_WHITE);   // 红色背景，白色文字
+    tgui_button_set_colors(&button2, TGUI_COLOR_GREEN, TGUI_COLOR_BLACK); // 绿色背景，黑色文字
 
     // 设置约束
     tgui_constraint_t constraints[4];
